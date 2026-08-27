@@ -2,6 +2,16 @@
 <style>body{font:16px Arial;margin:0;background:#f4f6fa;color:#172033}.w{max-width:850px;margin:auto;padding:25px}h1{font-size:38px}.card{background:white;padding:22px;border-radius:18px;margin:16px 0;box-shadow:0 5px 20px #0001}textarea,input{width:100%;box-sizing:border-box;padding:13px;margin:7px 0 12px;border:1px solid #ccd5e2;border-radius:10px;font-size:16px}button{background:#2563eb;color:white;border:0;border-radius:10px;padding:13px 18px;font-weight:bold}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.m{background:#f4f6fa;padding:13px;border-radius:10px}.m b{display:block;font-size:21px;margin-top:5px}.premium{background:#172033;color:white}@media(max-width:650px){.grid{grid-template-columns:1fr}}</style>
 <div class=w><h1>💰 Est-ce rentable ?</h1><p>Testez une idée d'investissement en quelques secondes.</p><div class=card><b>Votre idée</b><textarea id=idea rows=4 placeholder="Ex. Acheter un château gonflable pour le louer"></textarea><b>Zone</b><input id=loc value="Liposthey"><b>Budget</b><input id=budget placeholder="Ex. 2 000 €"><button onclick=go()>🔎 Analyser</button></div><div id=out></div></div>
 <script>
-function money(n){return Math.round(n).toLocaleString('fr-FR')+' €'}
-function go(){let x=idea.value.toLowerCase(),n=x.includes('gonfl')?'Château gonflable professionnel':x.includes('trott')?'Trottinette électrique':x.includes('enceinte')||x.includes('sono')?'Enceinte événementielle':'Projet de location';let a=n[0]=='C'?1800:n[0]=='T'?450:n.includes('Enceinte')?700:1500;let r=n[0]=='C'?120:n[0]=='T'?35:n.includes('Enceinte')?70:80;let q=n[0]=='C'?20:n[0]=='T'?35:n.includes('Enceinte')?25:20;let ca=r*q,c=Math.round(ca*.25)+150,b=ca-c,roi=b/a*100;out.innerHTML='<div class="card"><h2>🟢 Première estimation</h2><p><b>'+n+'</b> — '+loc.value+'</p><div class=grid><div class=m>Achat<b>'+money(a)+'</b></div><div class=m>Location<b>'+money(r)+'</b><small>/ jour</small></div><div class=m>ROI<b>'+roi.toFixed(0)+' %</b></div></div><p>CA annuel estimé : <b>'+money(ca)+'</b><br>Bénéfice estimé : <b>'+money(b)+'</b><br>Amortissement : <b>'+(a/b).toFixed(1)+' an</b></p><p>⚠️ Démonstration : les chiffres sont fictifs. La prochaine version recherchera les données réelles.</p></div><div class="card premium"><h2>💎 Étude complète</h2><p>Prix réels, concurrence, tarifs locaux, scénarios et prix maximum d’achat.</p><button>Étude complète — 7,90 €</button></div>'}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+async function go(){
+ const out=document.getElementById("out");
+ const idea=document.getElementById("idea").value, location=document.getElementById("loc").value, budget=document.getElementById("budget").value;
+ if(!idea.trim()){out.innerHTML='<div class="card orange">⚠️ Décris ton idée.</div>';return}
+ out.innerHTML='<div class="card">🔎 Recherche du marché et analyse IA en cours…<br><br>⏳ Cela peut prendre quelques secondes.</div>';
+ try{
+  const r=await fetch("/api/analyze",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({idea,location,budget})});
+  const j=await r.json(); if(!r.ok) throw Error(j.error||"Erreur");
+  out.innerHTML='<div class="card"><h2>🤖 Analyse IA</h2><div style="white-space:pre-wrap;line-height:1.6">'+esc(j.text)+'</div></div><div class="card premium"><h2>💎 Étude complète</h2><p>Sources détaillées, concurrence locale, fournisseurs, scénarios et prix maximum d'achat.</p><button>Étude complète — 7,90 €</button></div>';
+ }catch(e){out.innerHTML='<div class="card orange">⚠️ '+esc(e.message)+'</div>'}
+}
 </script>
